@@ -41,16 +41,16 @@ class Importer():
         return max(date_times, key=itemgetter(0))[1]
 
     def import_to_build(self, schema_name, version='latest'):
-        # if version == 'latest': 
-        #     version = self.get_latest_version(schema_name)
+        if version == 'latest': 
+            version = self.get_latest_version(schema_name)
             
-        srcDS = gdal.Open(self.src_engine, gdal.OF_VECTOR)
+        srcDS = gdal.OpenEx(self.src_engine, gdal.OF_VECTOR)
         dstDS = gdal.OpenEx(self.dst_engine, gdal.OF_VECTOR)
         
         gdal.VectorTranslate(
             dstDS,
             srcDS,
-            SQLStatement=f'SELECT * FROM parks_properties.v_2019_08_12',
+            SQLStatement=f'SELECT * FROM {schema_name}."{version}"',
             format='PostgreSQL',
             layerName=schema_name,
             accessMode='overwrite')
