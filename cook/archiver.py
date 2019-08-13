@@ -1,10 +1,8 @@
 import os
-import logging
 from osgeo import ogr
 from osgeo import gdal
 from pathlib import Path
 from urllib.parse import urlparse
-from osgeo.gdalconst import GA_ReadOnly
 from datetime import datetime
 from sqlalchemy import engine
 
@@ -71,7 +69,6 @@ class Archiver():
 
     @staticmethod
     def change_field_names(srcDS, newFieldNames): 
-        original_layername = srcDS.GetLayer().GetName()
         layer = srcDS.GetLayer(0)
         layerDefn = layer.GetLayerDefn()
 
@@ -112,6 +109,8 @@ class Archiver():
         # initiate source
         srcDS = Archiver.load_srcDS(path, srcOpenOptions, newFieldNames)
 
+        originalLayerName = srcDS.GetLayer().GetName()
+        
         # check on schema
         dstDS.ExecuteSQL(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
         
@@ -122,7 +121,8 @@ class Archiver():
         gdal.VectorTranslate(
             dstDS,
             srcDS,
-            SQLStatement=SQLStatement,
+            SQLStatement=SQLStatement.replace(schema_name, originalLayerName)\
+                            if SQLStatement else None,
             format='PostgreSQL',
             layerCreationOptions=layerCreationOptions,
             dstSRS=dstSRS,

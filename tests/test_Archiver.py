@@ -47,7 +47,9 @@ def test_csv_to_archive():
                                 'PR_ZONE','OV_ZONE', 'SD_ZONE', 'BBL', 'WATERFRONT', 
                                 'URBANRENEWALSITE', 'Agency', 'Owned_Leased', 'PrimaryUse', 
                                 'FinalCommitment', 'Agreement_Lease_Out', 'Postcode', 
-                                'Latitude', 'Longitude', 'CensusTract', 'BIN', 'NTA']
+                                'Latitude', 'Longitude', 'CensusTract', 'BIN', 'NTA'],
+                
+                'SQLStatement': 'SELECT * FROM dcas_ipis LIMIT 5'
                 })
 
 def test_ziped_shp_to_archive():
