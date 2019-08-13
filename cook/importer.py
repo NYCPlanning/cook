@@ -6,6 +6,7 @@ from osgeo.gdalconst import GA_ReadOnly
 from osgeo import ogr
 from urllib.parse import urlparse
 from osgeo import gdal
+from dateutil import parser
 
 class Importer():
     def __init__(self, 
@@ -36,11 +37,14 @@ class Importer():
 
         result = src_connection.execute(query)
 
-        date_times = [(datetime.strptime(date[0], '%Y_%m_%d'), date[0])
+        # date_times = [(datetime.strptime(date[0], '%Y/%m/%d'), date[0])
+        #               for date in result]
+        date_times = [(parser.parse(date[0], dayfirst=False), date[0])
                       for date in result]
+
         return max(date_times, key=itemgetter(0))[1]
 
-    def import_to_build(self, schema_name, version='latest'):
+    def import_table(self, schema_name, version='latest'):
         if version == 'latest': 
             version = self.get_latest_version(schema_name)
             
@@ -50,7 +54,7 @@ class Importer():
         gdal.VectorTranslate(
             dstDS,
             srcDS,
-            SQLStatement=f'SELECT * FROM {schema_name}."{version}"',
+            SQLStatement=f'SELECT \'{version}\' as version, * FROM {schema_name}."{version}"',
             format='PostgreSQL',
             layerName=schema_name,
             accessMode='overwrite')

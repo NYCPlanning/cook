@@ -5,7 +5,7 @@ from osgeo import gdal
 from pathlib import Path
 from urllib.parse import urlparse
 from osgeo.gdalconst import GA_ReadOnly
-import datetime
+from datetime import datetime
 from sqlalchemy import engine
 
 class Archiver():
@@ -51,10 +51,13 @@ class Archiver():
         
     
     @staticmethod
-    def load_srcDS(path):
+    def load_srcDS(path, open_options):
         path = Archiver.format_path(path)        
         allowed_drivers = Archiver.get_allowed_drivers(path)
-        srcDS = gdal.OpenEx(path, gdal.OF_VECTOR, allowed_drivers=allowed_drivers)
+        srcDS = gdal.OpenEx(path, 
+                            gdal.OF_VECTOR,
+                            open_options=open_options,
+                            allowed_drivers=allowed_drivers)
 
         # OpenEx returns None if the file can't be opened
         if (srcDS is None):
@@ -62,7 +65,7 @@ class Archiver():
 
         return srcDS
         
-    def dump_to_archive(self, config):
+    def archive_table(self, config):
         schema_name = config.get('schema_name', '')
         path = config.get('path', '')
         layerCreationOptions=config.get('layerCreationOptions', ['OVERWRITE=YES'])
@@ -70,17 +73,20 @@ class Archiver():
         srcSRS=config.get('srcSRS', 'EPSG:4326')
         geometryType=config.get('geometryType', 'POINT')
         SQLStatement=config.get('SQLStatement', None)
+        srcOpenOptions=config.get('srcOpenOptions', 
+                                ['AUTODETECT_TYPE=NO',
+                                'EMPTY_STRING_AS_NULL=YES'])
 
         # initiate destination
         dstDS = gdal.OpenEx(self.engine, gdal.OF_VECTOR)
 
         # initiate source
-        srcDS = Archiver.load_srcDS(path)
+        srcDS = Archiver.load_srcDS(path, srcOpenOptions)
 
         # check on schema
         dstDS.ExecuteSQL(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
         
-        layerName = f'{schema_name}.{datetime.date.today().isoformat()}'
+        layerName = f'{schema_name}.{datetime.today().strftime("%Y/%m/%d")}'
         
         print(f"GDAL used the {srcDS.GetDriver().ShortName} driver.\n")
         print(f'Dumping {layerName} to postgres...\n')
@@ -95,5 +101,5 @@ class Archiver():
             srcSRS=srcSRS,
             geometryType=geometryType,
             layerName=layerName,
-            accessMode='overwrite')            
+            accessMode='overwrite')
         
