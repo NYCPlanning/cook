@@ -23,17 +23,31 @@ def test_csv_to_archive():
         archiver = Archiver(engine=engine)
         
         archiver.archive_table(config={
-                'schema_name': 'qpl_libraries',
-                'path': 'https://data.cityofnewyork.us/api/views/kh3d-xhq7/rows.csv', 
+                'schema_name': 'dcas_ipis',
+                'path': 'https://data.cityofnewyork.us/api/views/n5mv-nfpy/rows.csv', 
+                
                 'geometryType':'POINT',
                 'srcSRS':'EPSG:4326',
                 'dstSRS':'EPSG:4326',
+
                 'layerCreationOptions':['OVERWRITE=YES'],
+
                 'srcOpenOptions': ['AUTODETECT_TYPE=NO',
                                 'EMPTY_STRING_AS_NULL=YES',
                                 'GEOM_POSSIBLE_NAMES=*geom*', 
                                 'X_POSSIBLE_NAMES=longitude,x',
-                                'Y_POSSIBLE_NAMES=latitude,y']
+                                'Y_POSSIBLE_NAMES=latitude,y'],
+
+                'newFieldNames': ['BOROUGH', 'BLOCK', 'LOT', 'PARCEL_NAME', 
+                                'PARCEL_ADDRESS', 'JURIS', 'JurisDescription', 
+                                'RPAD', 'RPAD_DESCRIPTION', 'PROP_FRONT', 
+                                'PROP_DEPTH', 'PROP_SQFT', 'IRREG', 'BLD_FRONT', 
+                                'BLD_DEPTH', 'BLD_SQFT', 'NUM_BLD', 'FLOORS', 
+                                'CommunityBoard','COUNCILDISTRICT', 'COUNCILMEMBER_NAME', 
+                                'PR_ZONE','OV_ZONE', 'SD_ZONE', 'BBL', 'WATERFRONT', 
+                                'URBANRENEWALSITE', 'Agency', 'Owned_Leased', 'PrimaryUse', 
+                                'FinalCommitment', 'Agreement_Lease_Out', 'Postcode', 
+                                'Latitude', 'Longitude', 'CensusTract', 'BIN', 'NTA']
                 })
 
 def test_ziped_shp_to_archive():
@@ -70,3 +84,5 @@ def test_ftp_ziped_shp_to_archive():
                 'layerCreationOptions':['OVERWRITE=YES', 'PRECISION=NO'],
                 'srcOpenOptions': []
                 })
+
+test_csv_to_archive()

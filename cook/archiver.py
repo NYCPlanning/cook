@@ -49,9 +49,8 @@ class Archiver():
             allowed_drivers = [driver for driver in allowed_drivers if "JSON" not in driver]
         return allowed_drivers
         
-    
     @staticmethod
-    def load_srcDS(path, open_options):
+    def load_srcDS(path, open_options, newFieldNames):
         path = Archiver.format_path(path)        
         allowed_drivers = Archiver.get_allowed_drivers(path)
         srcDS = gdal.OpenEx(path, 
@@ -62,9 +61,32 @@ class Archiver():
         # OpenEx returns None if the file can't be opened
         if (srcDS is None):
             raise Exception(f'Could not open {path}') 
+        
+        srcDS = Archiver.change_field_names(srcDS, newFieldNames)
+        return srcDS
+
+    @staticmethod
+    def lower_underscore(field_name): 
+        return field_name.replace(' ', '_').lower()
+
+    @staticmethod
+    def change_field_names(srcDS, newFieldNames): 
+        original_layername = srcDS.GetLayer().GetName()
+        layer = srcDS.GetLayer(0)
+        layerDefn = layer.GetLayerDefn()
+
+        if len(newFieldNames) == 0: 
+            for i in range(layerDefn.GetFieldCount()):
+                fieldDefn = layerDefn.GetFieldDefn(i)
+                fieldName = fieldDefn.GetName()
+                fieldDefn.SetName(Archiver.lower_underscore(fieldName))
+        else:
+            for i in range(len(newFieldNames)):
+                fieldDefn = layerDefn.GetFieldDefn(i)
+                fieldDefn.SetName(newFieldNames[i])
 
         return srcDS
-    
+
     def archive_table(self, config):
         tab = [ 0 ]
         def my_cbk(pct, _, arg):
@@ -82,12 +104,13 @@ class Archiver():
         srcOpenOptions=config.get('srcOpenOptions', 
                                 ['AUTODETECT_TYPE=NO',
                                 'EMPTY_STRING_AS_NULL=YES'])
+        newFieldNames=config.get('newFieldNames', [])
 
         # initiate destination
         dstDS = gdal.OpenEx(self.engine, gdal.OF_VECTOR)
 
         # initiate source
-        srcDS = Archiver.load_srcDS(path, srcOpenOptions)
+        srcDS = Archiver.load_srcDS(path, srcOpenOptions, newFieldNames)
 
         # check on schema
         dstDS.ExecuteSQL(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
