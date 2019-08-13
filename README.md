@@ -9,9 +9,9 @@ a data engineering package that facilitates spatial data ETL (based on GDAL)
 This package is based on GDAL and mainly does the following:
 - Archiving data from all different sources into an Archive database, which we call `recipe`
     - From open data or bytes of big apple:
-        - [ ] __csv__
-        - [ ] __geojson__
-        - [ ] __shapefile__
+        - [X] __csv__
+        - [X] __geojson__
+        - [X] __shapefile__
     - From local:
         - [ ] __csv__
         - [ ] __geojson__
