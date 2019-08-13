@@ -32,7 +32,7 @@ This package is based on GDAL and mainly does the following:
 Archiver can be initaited with a `RECIPE_ENGINE` database url and the `archive_table` method takes in a dictionary of configurations for each dataset
 
 e.g.
-```
+```python
 from cook import Archiver
 import os
 
@@ -65,7 +65,7 @@ archiver.archive_table(config={
 + first of all you need to have a `recipe` database set up with version-controlled datasets
 + `import_table` will automatically move the latest version of wanted table to the `build` database (if no version timestamps are specified)
 e.g.
-```
+```python
 from cook import Importer
 import os
 RECIPE_ENGINE = os.environ.get('EDM_DATA', '')
