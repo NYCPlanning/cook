@@ -5,6 +5,11 @@ a data engineering package that facilitates spatial data ETL (based on GDAL)
 - RECIPE_ENGINE=postgresql://USERNAME:PASSWORD@HOST:PORT/DBNAME
 - BUILD_ENGINE=postgresql://USERNAME:PASSWORD@HOST:PORT/DBNAME
 
+### Instructions: 
+install latest version directly from github
+```
+pip install git+https://github.com/NYCPlanning/cook.git@master
+```
 ### What is `cook`?
 This package is based on GDAL and mainly does the following:
 - Archiving data from all different sources into an Archive database, which we call `recipe`
