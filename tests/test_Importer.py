@@ -16,5 +16,3 @@ def test_import_2():
 
     importer = Importer(RECIPE_ENGINE, BUILD_ENGINE)
     importer.import_table(schema_name='facilities', version='latest')
-
-test_import_2()

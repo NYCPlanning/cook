@@ -14,8 +14,6 @@ def test_geojson_to_archive():
                 'layerCreationOptions':['OVERWRITE=YES'],
                 })
 
-test_geojson_to_archive()
-
 def test_csv_to_archive():
         from cook import Archiver
         import os
@@ -36,5 +34,3 @@ def test_csv_to_archive():
                                 'X_POSSIBLE_NAMES=longitude,x',
                                 'Y_POSSIBLE_NAMES=latitude,y']
                 })
-
-test_csv_to_archive()
