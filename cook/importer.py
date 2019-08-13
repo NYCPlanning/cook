@@ -50,11 +50,14 @@ class Importer():
             
         srcDS = gdal.OpenEx(self.src_engine, gdal.OF_VECTOR)
         dstDS = gdal.OpenEx(self.dst_engine, gdal.OF_VECTOR)
-        
+
+        print(f'Importing {schema_name} to build...\n')
+
         gdal.VectorTranslate(
             dstDS,
             srcDS,
             SQLStatement=f'SELECT \'{version}\' as version, * FROM {schema_name}."{version}"',
             format='PostgreSQL',
             layerName=schema_name,
-            accessMode='overwrite')
+            accessMode='overwrite',
+            callback=gdal.TermProgress)

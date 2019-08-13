@@ -64,8 +64,14 @@ class Archiver():
             raise Exception(f'Could not open {path}') 
 
         return srcDS
-        
+    
     def archive_table(self, config):
+        tab = [ 0 ]
+        def my_cbk(pct, _, arg):
+            assert pct >= tab[0]
+            tab[0] = pct
+            return 1
+
         schema_name = config.get('schema_name', '')
         path = config.get('path', '')
         layerCreationOptions=config.get('layerCreationOptions', ['OVERWRITE=YES'])
@@ -88,8 +94,7 @@ class Archiver():
         
         layerName = f'{schema_name}.{datetime.today().strftime("%Y/%m/%d")}'
         
-        print(f"GDAL used the {srcDS.GetDriver().ShortName} driver.\n")
-        print(f'Dumping {layerName} to postgres...\n')
+        print(f'Archiving {layerName} to recipes...\n')
 
         gdal.VectorTranslate(
             dstDS,
@@ -101,5 +106,5 @@ class Archiver():
             srcSRS=srcSRS,
             geometryType=geometryType,
             layerName=layerName,
-            accessMode='overwrite')
-        
+            accessMode='overwrite',
+            callback=gdal.TermProgress)

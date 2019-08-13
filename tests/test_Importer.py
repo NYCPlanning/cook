@@ -7,7 +7,6 @@ def test_import_1():
     importer = Importer(RECIPE_ENGINE, BUILD_ENGINE)
     importer.import_table(schema_name='parks_properties')
 
-# test_import_to_build()
 def test_import_2():
     from cook import Importer
     import os
