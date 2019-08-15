@@ -3,8 +3,9 @@ def test_geojson_to_archive():
         from cook import Archiver
         import os
         engine = os.environ.get('RECIPE_ENGINE', '')
+        ftp_prefix = os.environ.get('FTP_PREFIX', '')
 
-        archiver = Archiver(engine=engine)
+        archiver = Archiver(engine=engine, ftp_prefix=ftp_prefix)
 
         archiver.archive_table(config={
                 'schema_name': 'parks_properties',
@@ -19,8 +20,9 @@ def test_csv_to_archive():
         from cook import Archiver
         import os
         engine = os.environ.get('RECIPE_ENGINE', '')
-        
-        archiver = Archiver(engine=engine)
+        ftp_prefix = os.environ.get('FTP_PREFIX', '')
+
+        archiver = Archiver(engine=engine, ftp_prefix=ftp_prefix)
         
         archiver.archive_table(config={
                 'schema_name': 'dcas_ipis',
@@ -56,8 +58,9 @@ def test_ziped_shp_to_archive():
         from cook import Archiver
         import os
         engine = os.environ.get('RECIPE_ENGINE', '')
+        ftp_prefix = os.environ.get('FTP_PREFIX', '')
 
-        archiver = Archiver(engine=engine)
+        archiver = Archiver(engine=engine, ftp_prefix=ftp_prefix)
 
         archiver.archive_table(config={
                 'schema_name': 'dcp_censustracts',
@@ -74,12 +77,12 @@ def test_ftp_ziped_shp_to_archive():
         import os
         engine = os.environ.get('RECIPE_ENGINE', '')
         ftp_prefix = os.environ.get('FTP_PREFIX', '')
-        archiver = Archiver(engine=engine)
+
+        archiver = Archiver(engine=engine, ftp_prefix=ftp_prefix)
 
         archiver.archive_table(config={
-                'schema_name': 'dcp_censustracts',
-                # 'path': 'ftp://user:password@example.com/foldername/file.zip/example.shp',
-                'path': f'{ftp_prefix}/foldername/file.zip/example.shp',
+                'schema_name': 'dcp_zoningmapindex',
+                "path": "FTP_PREFIX/agencySourceData/dcp/DCP_Quartersection_Index.zip/DCP_Quartersection_Index.shp", 
                 'geometryType':'MULTIPOLYGON',
                 'srcSRS':'EPSG:2263',
                 'dstSRS':'EPSG:4326',
@@ -87,4 +90,20 @@ def test_ftp_ziped_shp_to_archive():
                 'srcOpenOptions': []
                 })
 
-test_csv_to_archive()
+def test_ziped_csv_to_archive():
+        from cook import Archiver
+        import os
+        engine = os.environ.get('RECIPE_ENGINE', '')
+        ftp_prefix = os.environ.get('FTP_PREFIX', '')
+
+        archiver = Archiver(engine=engine, ftp_prefix=ftp_prefix)
+
+        archiver.archive_table(config={
+                'schema_name': 'dcp_zoningtaxlots',
+                "path": "https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/nyczoningtaxlotdb_20190731.zip/NY_ZoningTaxLotDB_20190731.csv", 
+                'geometryType':'POINT',
+                'srcSRS':'EPSG:2263',
+                'dstSRS':'EPSG:4326',
+                'layerCreationOptions':['OVERWRITE=YES', 'PRECISION=NO'],
+                'srcOpenOptions': []
+                })

@@ -8,7 +8,8 @@ from sqlalchemy import engine
 
 class Archiver():
     def __init__(self,
-                 engine='env://RECIPE_ENGINE'):
+                ftp_prefix, 
+                engine='env://RECIPE_ENGINE'):
 
         if engine.startswith('env://'):
             env_var = engine[6:]
@@ -18,6 +19,7 @@ class Archiver():
                                  "Please set your '%s' environment variable" % env_var)
 
         self.engine = self.parse_engine(engine)
+        self.ftp_prefix=os.environ.get('FTP_PREFIX', '')
 
     def parse_engine(self, engine):
         result = urlparse(engine)
@@ -31,15 +33,21 @@ class Archiver():
     
     @staticmethod
     def format_path(path):
-        """ Adds vsizip to [path] if [path] is a ShapeFile."""
-        filename, extension = os.path.splitext(os.path.basename(path))
-        
-        if extension == '.shp' or extension == '.zip':
+        """ 
+            Adds vsizip to [path] if [path] is zipped.
+            - abcd.zip/abcd.shp
+            - abcd.zip/abcd.csv
+            - etc
+        """
+        if '.zip' in path:
             path = "/vsizip/vsicurl/" + path
         return path
         
     def get_allowed_drivers(path):
-        """ Returns allowed drivers for OpenEx given the file type of [path]"""
+        """ 
+            Returns allowed drivers for OpenEx 
+            given the file type of [path]
+        """
         allowed_drivers = [gdal.GetDriver(i).GetDescription() for i in range(gdal.GetDriverCount())]
         
         filename, extension = os.path.splitext(os.path.basename(path))
@@ -107,6 +115,7 @@ class Archiver():
         dstDS = gdal.OpenEx(self.engine, gdal.OF_VECTOR)
 
         # initiate source
+        path = path.replace('FTP_PREFIX', self.ftp_prefix)
         srcDS = Archiver.load_srcDS(path, srcOpenOptions, newFieldNames)
 
         originalLayerName = srcDS.GetLayer().GetName()
