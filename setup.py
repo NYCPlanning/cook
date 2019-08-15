@@ -14,5 +14,6 @@ setup(name='cook',
             'pytest',
             'shapely', 
             'usaddress', 
-            'bs4']
+            'bs4', 
+            'pandas']
       )

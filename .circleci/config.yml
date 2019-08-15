@@ -1,0 +1,17 @@
+version: 2
+jobs:
+ build:
+   machine: true
+   steps:
+    - checkout
+    - run: 
+        name: perform some test
+        command: |
+          echo "hasnt been implemented yet ..."
+    - run:
+        name: Build and push Docker image
+        command: |
+          TAG="${CIRCLE_SHA1}"
+          docker build -t sptkl/cook:$TAG .
+          docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
+          docker push sptkl/cook:$TAG
