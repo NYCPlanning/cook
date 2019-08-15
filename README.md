@@ -1,4 +1,4 @@
-# Cook
+# Cook [![CircleCI](https://circleci.com/gh/NYCPlanning/cook.svg?style=svg)](https://circleci.com/gh/NYCPlanning/cook)
 a data engineering package that facilitates spatial data ETL (based on GDAL)
 
 ### Environmental variables: 
