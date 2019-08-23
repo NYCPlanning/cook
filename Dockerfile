@@ -5,7 +5,7 @@ RUN apt update\
         git\
         python3-pip\
         postgresql-client-common\
-        postgresql-client-11
+        postgresql-client-10
 
 COPY . /home/cook/
 
