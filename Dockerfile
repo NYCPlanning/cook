@@ -3,7 +3,9 @@ FROM osgeo/gdal:ubuntu-small-latest
 RUN apt update\
     && apt install -y\
         git\
-        python3-pip
+        python3-pip\
+        postgresql-client-common\
+        postgresql-client-11
 
 COPY . /home/cook/
 
