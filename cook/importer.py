@@ -56,7 +56,7 @@ class Importer():
         gdal.VectorTranslate(
             dstDS,
             srcDS,
-            SQLStatement=f'SELECT \'{version}\' as version, * FROM {schema_name}."{version}"',
+            SQLStatement=f'SELECT * FROM {schema_name}."{version}"',
             format='PostgreSQL',
             layerName=schema_name,
             accessMode='overwrite',
