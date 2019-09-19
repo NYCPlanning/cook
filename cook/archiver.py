@@ -147,4 +147,4 @@ class Archiver():
         print(f'\nTagging {layerName} as {schema_name}.latest ...')
 
         dstDS.ExecuteSQL(f'DROP TABLE IF EXISTS {schema_name}.latest;')
-        dstDS.ExecuteSQL(f'CREATE TABLE {schema_name}.latest AS (SELECT * FROM {layerName});')
+        dstDS.ExecuteSQL(f"CREATE TABLE {schema_name}.latest AS (SELECT * FROM {layerName});")
