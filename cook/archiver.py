@@ -146,5 +146,16 @@ class Archiver():
         # tag version as latest
         print(f'\nTagging {layerName} as {schema_name}.latest ...')
 
-        dstDS.ExecuteSQL(f'DROP TABLE IF EXISTS {schema_name}.latest;')
-        dstDS.ExecuteSQL(f"CREATE TABLE {schema_name}.latest AS (SELECT * FROM {layerName});")
+        gdal.VectorTranslate(
+            dstDS,
+            srcDS,
+            SQLStatement=SQLStatement.replace(schema_name, originalLayerName)\
+                            if SQLStatement else None,
+            format='PostgreSQL',
+            layerCreationOptions=layerCreationOptions,
+            dstSRS=dstSRS,
+            srcSRS=srcSRS,
+            geometryType=geometryType,
+            layerName=f'{schema_name}.latest',
+            accessMode='overwrite',
+            callback=gdal.TermProgress)
