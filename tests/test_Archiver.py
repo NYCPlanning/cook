@@ -9,6 +9,7 @@ def test_geojson_to_archive():
 
         archiver.archive_table(config={
                 'schema_name': 'parks_properties',
+                'version_name': 'test_test',
                 'path': 'https://data.cityofnewyork.us/api/geospatial/k2ya-ucmv?method=export&format=GeoJSON', 
                 'geometryType':'MULTIPOLYGON',
                 'srcSRS':'EPSG:4326',

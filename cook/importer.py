@@ -37,12 +37,17 @@ class Importer():
 
         result = src_connection.execute(query)
 
-        # date_times = [(datetime.strptime(date[0], '%Y/%m/%d'), date[0])
-        #               for date in result]
-        date_times = [(parser.parse(date[0], dayfirst=False), date[0])
-                      for date in result]
+        def try_date(date): 
+            try: 
+                return parser.parse(date, dayfirst=False)
+            except: 
+                return None
 
-        return max(date_times, key=itemgetter(0))[1]
+        date_times = [i for i in [(try_date(date[0]), date[0]) for date in result] if i[0] is not None]
+        if len(date_times) == 0: 
+            return 'latest'
+        else: 
+            return max(date_times, key=itemgetter(0))[1]
 
     def import_table(self, schema_name, version='latest'):
         if version == 'latest': 
@@ -56,7 +61,7 @@ class Importer():
         gdal.VectorTranslate(
             dstDS,
             srcDS,
-            SQLStatement=f'SELECT * FROM {schema_name}."{version}"',
+            SQLStatement=f'SELECT \'{version}\' as v, * FROM {schema_name}."{version}"',
             format='PostgreSQL',
             layerName=schema_name,
             accessMode='overwrite',

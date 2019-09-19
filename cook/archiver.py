@@ -100,11 +100,12 @@ class Archiver():
             return 1
 
         schema_name = config.get('schema_name', '')
+        version_name = config.get('version_name', '')
         path = config.get('path', '')
         layerCreationOptions=config.get('layerCreationOptions', ['OVERWRITE=YES'])
         dstSRS=config.get('dstSRS', 'EPSG:4326')
         srcSRS=config.get('srcSRS', 'EPSG:4326')
-        geometryType=config.get('geometryType', 'POINT')
+        geometryType=config.get('geometryType', 'NONE')
         SQLStatement=config.get('SQLStatement', None)
         srcOpenOptions=config.get('srcOpenOptions', 
                                 ['AUTODETECT_TYPE=NO',
@@ -123,10 +124,11 @@ class Archiver():
         # check on schema
         dstDS.ExecuteSQL(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
         
-        layerName = f'{schema_name}.{datetime.today().strftime("%Y/%m/%d")}'
         
-        print(f'Archiving {layerName} to recipes...\n')
+        layerName = f'{schema_name}.{datetime.today().strftime("%Y/%m/%d")}' \
+                        if version_name == '' else f'{schema_name}.{version_name}'
 
+        print(f'\nArchiving {layerName} to recipes...')
         gdal.VectorTranslate(
             dstDS,
             srcDS,
@@ -140,3 +142,9 @@ class Archiver():
             layerName=layerName,
             accessMode='overwrite',
             callback=gdal.TermProgress)
+        
+        # tag version as latest
+        print(f'\nTagging {layerName} as {schema_name}.latest ...')
+
+        dstDS.ExecuteSQL(f'DROP TABLE IF EXISTS {schema_name}.latest;')
+        dstDS.ExecuteSQL(f'CREATE TABLE {schema_name}.latest AS (SELECT * FROM {layerName});')
