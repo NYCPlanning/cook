@@ -1,11 +1,11 @@
 version: 2
 jobs:
-  build:
-    branches:
-      only:
-        - master
-  machine: true
-  steps:
+ build:
+   branches:
+     only:
+      - master
+   machine: true
+   steps:
     - checkout
     - run: 
         name: perform some test
