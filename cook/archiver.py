@@ -186,5 +186,5 @@ class Archiver():
             pass
 
         dstDS.ExecuteSQL(f'''
-        CREATE VIEW {schema_name}.latest as (SELECT \'{version}\' as v, * from {layerName});
+        CREATE VIEW {schema_name}.latest as (SELECT \'{version}\' as v, * from {schema_name}."{version}");
         ''')
