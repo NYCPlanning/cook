@@ -57,16 +57,39 @@ class Archiver():
         
     @staticmethod
     def load_srcDS(path, open_options, newFieldNames):
-        path = Archiver.format_path(path)        
+        path = Archiver.format_path(path)
         allowed_drivers = Archiver.get_allowed_drivers(path)
         srcDS = gdal.OpenEx(path, 
                             gdal.OF_VECTOR,
                             open_options=open_options,
                             allowed_drivers=allowed_drivers)
-
         # OpenEx returns None if the file can't be opened
         if (srcDS is None):
-            raise Exception(f'Could not open {path}') 
+            raise Exception(f'Could not open {path}')
+        
+        srcDS = Archiver.change_field_names(srcDS, newFieldNames)
+        return srcDS
+
+    @staticmethod
+    def download_srcDS(path, open_options, newFieldNames):
+        def download_unzip(path): 
+            tmp = Path(__file__).parent/'tmp'
+            os.system(f'mkdir -p {tmp}')
+            os.system(f'cd {tmp} && curl -O {path}; pwd && cd -;')
+            home = Path(__file__).parent
+            path = [tmp/i for i in os.listdir(tmp)][0]
+            path = str(path.relative_to(home))
+            return path
+        path = download_unzip(path)
+        path = Archiver.format_path(path)
+        allowed_drivers = Archiver.get_allowed_drivers(path)
+        srcDS = gdal.OpenEx(path, 
+                            gdal.OF_VECTOR,
+                            open_options=open_options,
+                            allowed_drivers=allowed_drivers)
+        # OpenEx returns None if the file can't be opened
+        if (srcDS is None):
+            raise Exception(f'Could not open {path}')
         
         srcDS = Archiver.change_field_names(srcDS, newFieldNames)
         return srcDS
@@ -102,31 +125,33 @@ class Archiver():
         schema_name = config.get('schema_name', '')
         version_name = config.get('version_name', '')
         path = config.get('path', '')
-        layerCreationOptions=config.get('layerCreationOptions', ['OVERWRITE=YES'])
-        dstSRS=config.get('dstSRS', 'EPSG:4326')
-        srcSRS=config.get('srcSRS', 'EPSG:4326')
-        geometryType=config.get('geometryType', 'NONE')
-        SQLStatement=config.get('SQLStatement', None)
-        srcOpenOptions=config.get('srcOpenOptions', 
+        download = config.get('download', '')
+        layerCreationOptions = config.get('layerCreationOptions',
+                                            ['OVERWRITE=YES'])
+        dstSRS = config.get('dstSRS', 'EPSG:4326')
+        srcSRS = config.get('srcSRS', 'EPSG:4326')
+        geometryType = config.get('geometryType', 'NONE')
+        SQLStatement = config.get('SQLStatement', None)
+        srcOpenOptions = config.get('srcOpenOptions',
                                 ['AUTODETECT_TYPE=NO',
                                 'EMPTY_STRING_AS_NULL=YES'])
-        newFieldNames=config.get('newFieldNames', [])
+        newFieldNames = config.get('newFieldNames', [])
 
         # initiate destination
         dstDS = gdal.OpenEx(self.engine, gdal.OF_VECTOR)
 
         # initiate source
         path = path.replace('FTP_PREFIX', self.ftp_prefix)
-        srcDS = Archiver.load_srcDS(path, srcOpenOptions, newFieldNames)
+        srcDS = Archiver.download_srcDS(path, srcOpenOptions, newFieldNames) if download \
+                else Archiver.load_srcDS(path, srcOpenOptions, newFieldNames)
 
         originalLayerName = srcDS.GetLayer().GetName()
         
         # check on schema
         dstDS.ExecuteSQL(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
         
-        
-        layerName = f'{schema_name}.{datetime.today().strftime("%Y/%m/%d")}' \
-                        if version_name == '' else f'{schema_name}.{version_name}'
+        version = datetime.today().strftime("%Y/%m/%d") if version_name == '' else version_name
+        layerName = f'{schema_name}.{version}'
 
         print(f'\nArchiving {layerName} to recipes...')
         gdal.VectorTranslate(
@@ -146,16 +171,20 @@ class Archiver():
         # tag version as latest
         print(f'\nTagging {layerName} as {schema_name}.latest ...')
 
-        gdal.VectorTranslate(
-            dstDS,
-            srcDS,
-            SQLStatement=SQLStatement.replace(schema_name, originalLayerName)\
-                            if SQLStatement else None,
-            format='PostgreSQL',
-            layerCreationOptions=layerCreationOptions,
-            dstSRS=dstSRS,
-            srcSRS=srcSRS,
-            geometryType=geometryType,
-            layerName=f'{schema_name}.latest',
-            accessMode='overwrite',
-            callback=gdal.TermProgress)
+        try: 
+            dstDS.ExecuteSQL(f'''
+            DROP VIEW IF EXISTS {schema_name}.latest;
+            ''')
+        except: 
+            pass
+
+        try:
+            dstDS.ExecuteSQL(f'''
+            DROP TABLE IF EXISTS {schema_name}.latest;
+            ''')
+        except: 
+            pass
+
+        dstDS.ExecuteSQL(f'''
+        CREATE VIEW {schema_name}.latest as (SELECT \'{version}\' as v, * from {schema_name}."{version}");
+        ''')
