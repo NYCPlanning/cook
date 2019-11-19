@@ -150,9 +150,8 @@ class Archiver():
         # check on schema
         dstDS.ExecuteSQL(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
         
-        
-        layerName = f'{schema_name}.{datetime.today().strftime("%Y/%m/%d")}' \
-                        if version_name == '' else f'{schema_name}.{version_name}'
+        version = datetime.today().strftime("%Y/%m/%d") if version_name == '' else version_name
+        layerName = f'{schema_name}.{version}'
 
         print(f'\nArchiving {layerName} to recipes...')
         gdal.VectorTranslate(
@@ -172,16 +171,20 @@ class Archiver():
         # tag version as latest
         print(f'\nTagging {layerName} as {schema_name}.latest ...')
 
-        gdal.VectorTranslate(
-            dstDS,
-            srcDS,
-            SQLStatement=SQLStatement.replace(schema_name, originalLayerName)\
-                            if SQLStatement else None,
-            format='PostgreSQL',
-            layerCreationOptions=layerCreationOptions,
-            dstSRS=dstSRS,
-            srcSRS=srcSRS,
-            geometryType=geometryType,
-            layerName=f'{schema_name}.latest',
-            accessMode='overwrite',
-            callback=gdal.TermProgress)
+        try: 
+            dstDS.ExecuteSQL(f'''
+            DROP VIEW IF EXISTS {schema_name}.latest;
+            ''')
+        except: 
+            pass
+
+        try:
+            dstDS.ExecuteSQL(f'''
+            DROP TABLE IF EXISTS {schema_name}.latest;
+            ''')
+        except: 
+            pass
+
+        dstDS.ExecuteSQL(f'''
+        CREATE VIEW {schema_name}.latest as (SELECT \'{version}\' as v, * from {layerName});
+        ''')

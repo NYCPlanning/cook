@@ -1,22 +1,20 @@
 # # External url tests (including opendata, bytes of big apple)
-# def test_geojson_to_archive():
-#         from cook import Archiver
-#         import os
-#         engine = os.environ.get('RECIPE_ENGINE', '')
-#         ftp_prefix = os.environ.get('FTP_PREFIX', '')
+def test_geojson_to_archive():
+        from cook import Archiver
+        import os
 
-#         archiver = Archiver(engine=engine, ftp_prefix=ftp_prefix)
+        archiver = Archiver(engine=engine, ftp_prefix=ftp_prefix)
 
-#         archiver.archive_table(config={
-#                 'schema_name': 'parks_properties',
-#                 'version_name': 'test_test',
-#                 'path': 'https://data.cityofnewyork.us/api/geospatial/k2ya-ucmv?method=export&format=GeoJSON', 
-#                 'geometryType':'MULTIPOLYGON',
-#                 'srcSRS':'EPSG:4326',
-#                 'dstSRS':'EPSG:4326',
-#                 'layerCreationOptions':['OVERWRITE=YES'],
-#                 })
-                
+        archiver.archive_table(config={
+                'schema_name': 'test',
+                'version_name': 'test_test',
+                'path': 'https://data.cityofnewyork.us/api/geospatial/k2ya-ucmv?method=export&format=GeoJSON', 
+                'geometryType':'MULTIPOLYGON',
+                'srcSRS':'EPSG:4326',
+                'dstSRS':'EPSG:4326',
+                'layerCreationOptions':['OVERWRITE=YES'],
+                })
+                        
 # def test_csv_to_archive():
 #         from cook import Archiver
 #         import os
@@ -73,7 +71,6 @@ def test_ziped_shp_to_archive():
                 'srcOpenOptions': [], 
                 'download':True
                 })
-test_ziped_shp_to_archive()
 # def test_ftp_ziped_shp_to_archive():
 #         from cook import Archiver
 #         import os
