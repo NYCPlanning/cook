@@ -40,7 +40,10 @@ class Archiver():
             - etc
         """
         if '.zip' in path:
-            path = "/vsizip/vsicurl/" + path
+            if 'http' in path:
+                path = "/vsizip/vsicurl/" + path
+            else: 
+                path = "/vsizip/" + path
         return path
         
     def get_allowed_drivers(path):
