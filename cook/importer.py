@@ -62,6 +62,6 @@ class Importer():
             dstDS,
             srcDS,
             format='PostgreSQL',
-            layerName=schema_name,
+            layerName=f'{schema_name}."{version}"',
             accessMode='overwrite',
             callback=gdal.TermProgress)
