@@ -4,6 +4,11 @@ a data engineering package that facilitates spatial data ETL (based on GDAL)
 ### Environmental variables: 
 - RECIPE_ENGINE=postgresql://USERNAME:PASSWORD@HOST:PORT/DBNAME
 - BUILD_ENGINE=postgresql://USERNAME:PASSWORD@HOST:PORT/DBNAME
+- AWS_S3_ENDPOINT=XXXXXXXXXXXXXXX
+- AWS_SECRET_ACCESS_KEY=XXXXXXXXX
+- AWS_ACCESS_KEY_ID=XXXXXXXXXXXXX
+- LC_ALL=C.UTF
+- LANG=C.UTF-8
 
 ### Instructions: 
 install latest version directly from github
@@ -17,14 +22,10 @@ This package is based on GDAL and mainly does the following:
         - [X] __csv__
         - [X] __geojson__
         - [X] __shapefile__
-    - From local:
-        - [ ] __csv__
-        - [ ] __geojson__
-        - [ ] __shapefile__
-    - From FTP:
-        - [ ] __csv__
-        - [ ] __geojson__
-        - [ ] __shapefile__
+    - From S3:
+        - [X] __csv__
+        - [X] __geojson__
+        - [X] __shapefile__
 
 - Importing data from `recipe` to any production database (`build`)
 
@@ -69,14 +70,11 @@ e.g.
 from cook import Importer
 import os
 RECIPE_ENGINE = os.environ.get('EDM_DATA', '')
-BUILD_ENGINE=os.environ.get('BUILD_ENGINE', '')
+BUILD_ENGINE = os.environ.get('BUILD_ENGINE', '')
 
 importer = Importer(RECIPE_ENGINE, BUILD_ENGINE)
 importer.import_table(schema_name='qpl_libraries', version='latest')
 importer.import_table(schema_name='dpr_parksproperties', version='latest')
 importer.import_table(schema_name='facilities', version='latest')
+importer.import_table_expert(schema_name='test', version='latest', target_schema_name='public', target_version='test2')
 ```
-
-### Nice to have and Next steps
-+ mechanisms to delete datasets
-+ archive entire `recipe` database to s3

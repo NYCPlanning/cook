@@ -2,38 +2,26 @@ import os
 from osgeo import ogr
 from osgeo import gdal
 from pathlib import Path
-from urllib.parse import urlparse
+from .utils import parse_engine
 from datetime import datetime
 from sqlalchemy import engine
 
 class Archiver():
-    def __init__(self,
-                ftp_prefix, 
-                engine='env://RECIPE_ENGINE'):
+    def __init__(self, ftp_prefix, engine, s3_endpoint='', 
+                s3_secret_access_key='', s3_access_key_id=''):
 
-        if engine.startswith('env://'):
-            env_var = engine[6:]
-            engine = os.environ.get(env_var)
-            if engine is None:
-                raise ValueError("Couldn't connect to DB - "
-                                 "Please set your '%s' environment variable" % env_var)
-
-        self.engine = self.parse_engine(engine)
-        self.ftp_prefix=os.environ.get('FTP_PREFIX', '')
-
-    def parse_engine(self, engine):
-        result = urlparse(engine)
-        username = result.username
-        password = result.password
-        database = result.path[1:]
-        hostname = result.hostname
-        portnum = result.port
-        
-        return f'PG:host={hostname} port={portnum} user={username} dbname={database} password={password}'
+        self.engine = parse_engine(engine)
+        self.ftp_prefix=ftp_prefix
+        self.s3_endpoint=s3_endpoint
+        self.s3_secret_access_key=s3_secret_access_key
+        self.s3_access_key_id=s3_access_key_id
     
     @staticmethod
     def format_path(path):
         """ 
+            Adds vsis3 if path is from s3
+            - s3://edm-recipes/recipes.csv
+
             Adds vsizip to [path] if [path] is zipped.
             - abcd.zip/abcd.shp
             - abcd.zip/abcd.csv
@@ -42,8 +30,13 @@ class Archiver():
         if '.zip' in path:
             if 'http' in path:
                 path = "/vsizip/vsicurl/" + path
-            else: 
+            if 's3://' in path: 
+                path = "/vsizip/vsis3/" + path.replace('s3://', '')
+            else:
                 path = "/vsizip/" + path
+        if 's3://' in path and '.zip' not in path:
+            path = path.replace('s3://', '/vsis3/')
+        
         return path
         
     def get_allowed_drivers(path):
@@ -52,41 +45,25 @@ class Archiver():
             given the file type of [path]
         """
         allowed_drivers = [gdal.GetDriver(i).GetDescription() for i in range(gdal.GetDriverCount())]
-        
+
         filename, extension = os.path.splitext(os.path.basename(path))
         if extension == '.csv':
             allowed_drivers = [driver for driver in allowed_drivers if "JSON" not in driver]
         return allowed_drivers
         
     @staticmethod
-    def load_srcDS(path, open_options, newFieldNames):
-        path = Archiver.format_path(path)
-        allowed_drivers = Archiver.get_allowed_drivers(path)
-        srcDS = gdal.OpenEx(path, 
-                            gdal.OF_VECTOR,
-                            open_options=open_options,
-                            allowed_drivers=allowed_drivers)
-        # OpenEx returns None if the file can't be opened
-        if (srcDS is None):
-            raise Exception(f'Could not open {path}')
+    def load_srcDS(path, open_options, newFieldNames, 
+                    s3_endpoint,
+                    s3_secret_access_key, 
+                    s3_access_key_id):
         
-        srcDS = Archiver.change_field_names(srcDS, newFieldNames)
-        return srcDS
+        gdal.SetConfigOption('AWS_S3_ENDPOINT', s3_endpoint)
+        gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', s3_secret_access_key)
+        gdal.SetConfigOption('AWS_ACCESS_KEY_ID', s3_access_key_id)
 
-    @staticmethod
-    def download_srcDS(path, open_options, newFieldNames):
-        def download_unzip(path): 
-            tmp = Path(__file__).parent/'tmp'
-            os.system(f'mkdir -p {tmp}')
-            os.system(f'cd {tmp} && curl -O {path}; pwd && cd -;')
-            home = Path(__file__).parent
-            path = [tmp/i for i in os.listdir(tmp)][0]
-            path = str(path.relative_to(home))
-            return path
-        path = download_unzip(path)
         path = Archiver.format_path(path)
         allowed_drivers = Archiver.get_allowed_drivers(path)
-        srcDS = gdal.OpenEx(path, 
+        srcDS = gdal.OpenEx(path,
                             gdal.OF_VECTOR,
                             open_options=open_options,
                             allowed_drivers=allowed_drivers)
@@ -128,7 +105,6 @@ class Archiver():
         schema_name = config.get('schema_name', '')
         version_name = config.get('version_name', '')
         path = config.get('path', '')
-        download = config.get('download', '')
         layerCreationOptions = config.get('layerCreationOptions',
                                             ['OVERWRITE=YES'])
         dstSRS = config.get('dstSRS', 'EPSG:4326')
@@ -144,9 +120,14 @@ class Archiver():
         dstDS = gdal.OpenEx(self.engine, gdal.OF_VECTOR)
 
         # initiate source
-        path = path.replace('FTP_PREFIX', self.ftp_prefix)
-        srcDS = Archiver.download_srcDS(path, srcOpenOptions, newFieldNames) if download \
-                else Archiver.load_srcDS(path, srcOpenOptions, newFieldNames)
+        path = path.replace('ftp:/', self.ftp_prefix)
+        path = path.replace('FTP_PREFIX', self.ftp_prefix) # for backward compatibility
+
+        srcDS = Archiver.load_srcDS(path, srcOpenOptions, 
+                                    newFieldNames, 
+                                    self.s3_endpoint, 
+                                    self.s3_secret_access_key, 
+                                    self.s3_access_key_id)
 
         originalLayerName = srcDS.GetLayer().GetName()
         
@@ -160,8 +141,7 @@ class Archiver():
         gdal.VectorTranslate(
             dstDS,
             srcDS,
-            SQLStatement=SQLStatement.replace(schema_name, originalLayerName)\
-                            if SQLStatement else None,
+            SQLStatement=SQLStatement.replace(schema_name, originalLayerName) if SQLStatement else None,
             format='PostgreSQL',
             layerCreationOptions=layerCreationOptions,
             dstSRS=dstSRS,
@@ -170,7 +150,7 @@ class Archiver():
             layerName=layerName,
             accessMode='overwrite',
             callback=gdal.TermProgress)
-        
+
         # tag version as latest
         print(f'\nTagging {layerName} as {schema_name}.latest ...')
 
