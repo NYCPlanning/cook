@@ -11,5 +11,6 @@ setup(name='cook',
             'click',
             'psycopg2-binary',
             'sqlalchemy',
-            'pytest']
+            'pytest',
+            'python-dateutil']
       )
