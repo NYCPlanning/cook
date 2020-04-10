@@ -8,7 +8,6 @@ setup(name='cook',
       license='MIT',
       pacakges=find_packages(),
       install_requires=[
-            'GDAL==2.4.2',
             'click',
             'psycopg2-binary',
             'sqlalchemy',
