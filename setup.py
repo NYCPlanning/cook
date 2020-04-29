@@ -10,6 +10,7 @@ setup(name='cook',
       install_requires=[
             'click',
             'psycopg2-binary',
+            'pandas',
             'sqlalchemy',
             'pytest',
             'python-dateutil',
