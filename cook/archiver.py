@@ -30,7 +30,7 @@ class Archiver():
         if '.zip' in path:
             if 'http' in path:
                 path = "/vsizip/vsicurl/" + path
-            if 's3://' in path: 
+            elif 's3://' in path: 
                 path = "/vsizip/vsis3/" + path.replace('s3://', '')
             else:
                 path = "/vsizip/" + path
