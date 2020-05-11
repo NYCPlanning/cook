@@ -168,6 +168,14 @@ class Archiver():
         except: 
             pass
 
+        try:
+            dstDS.ExecuteSQL(f'''
+            UPDATE {schema_name}."{version}"
+            SET wkb_geometry = st_makevalid(wkb_geometry);
+            ''')
+        except: 
+            pass
+
         dstDS.ExecuteSQL(f'''
         CREATE VIEW {schema_name}.latest as (SELECT \'{version}\' as v, * from {schema_name}."{version}");
         ''')
