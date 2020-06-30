@@ -13,6 +13,7 @@ setup(name='cook',
             'pandas',
             'sqlalchemy',
             'pytest',
+            'requests',
             'python-dateutil',
             'pathlib']
       )
